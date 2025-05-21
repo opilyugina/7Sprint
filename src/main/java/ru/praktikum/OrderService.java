@@ -23,9 +23,10 @@ public class OrderService {
 
     @Step("Отмена заказа")
     public Response cancelOrder(int track) {
+        CancelOrderModel cancelOrderModel = new CancelOrderModel(track);
         return given()
                 .header("Content-type", "application/json")
-                .body("{\"track\":" + track + "}")
+                .body(cancelOrderModel)
                 .when()
                 .put(Endpoints.ORDER_CANCEL);
     }

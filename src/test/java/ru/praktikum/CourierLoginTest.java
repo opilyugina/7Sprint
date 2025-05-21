@@ -11,12 +11,14 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @DisplayName("Курьер может авторизоваться")
-    @Description("Проверяет, что если курьер вводит валидные логин и пароль во время входа в систему, то возвращается 200 ОК")
+    @Description("Проверяет, что при вводе валидных логина и пароля возвращается 200 ОК и id")
     public void courierCanLogin() {
         Courier courier = generateRandomCourier();
         courierService.createCourier(courier);
 
-        courierId = courierService.loginCourier(courier)
+        CourierModel model = new CourierModel(courier.getLogin(), courier.getPassword());
+
+        courierId = courierService.loginCourier(model)
                 .then()
                 .statusCode(SC_OK)
                 .body("id", notNullValue())
@@ -25,13 +27,14 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @DisplayName("Нельзя авторизоваться с неправильным паролем")
-    @Description("Проверяет, что если курьер вводит неверный пароль во время входа в систему, то возвращается 404 Not Found и " +
-            "сообщение о том, что учетная запись не найдена.")
+    @Description("Проверяет, что возвращается 404 при неверном пароле")
     public void cannotLoginWithWrongPassword() {
         Courier courier = generateRandomCourier();
         courierService.createCourier(courier);
 
-        courierService.loginCourier(new Courier(courier.getLogin(), "wrong_password", null))
+        CourierModel model = new CourierModel(courier.getLogin(), "wrong_password");
+
+        courierService.loginCourier(model)
                 .then()
                 .statusCode(SC_NOT_FOUND)
                 .body("message", equalTo("Учетная запись не найдена"));
@@ -39,15 +42,46 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @DisplayName("Нельзя авторизоваться без пароля")
-    @Description("Проверяет, что если курьер пытается войти в систему без ввода пароля, то возвращается 400 Bad Request " +
-            "и сообщение о нехватке данных для входа.")
+    @Description("Проверяет, что возвращается 400 при отсутствии пароля")
     public void cannotLoginWithoutPassword() {
         Courier courier = generateRandomCourier();
         courierService.createCourier(courier);
 
-        courierService.loginCourier(new Courier(courier.getLogin(), null, null))
+        CourierModel model = new CourierModel(courier.getLogin(), null);
+
+        courierService.loginCourier(model)
                 .then()
                 .statusCode(SC_BAD_REQUEST)
                 .body("message", equalTo("Недостаточно данных для входа"));
+    }
+
+    @Test
+    @DisplayName("Нельзя авторизоваться без логина")
+    @Description("Проверяет, что возвращается 400 при отсутствии логина")
+    public void cannotLoginWithoutLogin() {
+        Courier courier = generateRandomCourier();
+        courierService.createCourier(courier);
+
+        CourierModel model = new CourierModel(null, courier.getPassword());
+
+        courierService.loginCourier(model)
+                .then()
+                .statusCode(SC_BAD_REQUEST)
+                .body("message", equalTo("Недостаточно данных для входа"));
+    }
+
+    @Test
+    @DisplayName("Нельзя авторизоваться с неправильным логином")
+    @Description("Проверяет, что возвращается 404 при неверном логине")
+    public void cannotLoginWithWrongLogin() {
+        Courier courier = generateRandomCourier();
+        courierService.createCourier(courier);
+
+        CourierModel model = new CourierModel("wrong_login", courier.getPassword());
+
+        courierService.loginCourier(model)
+                .then()
+                .statusCode(SC_NOT_FOUND)
+                .body("message", equalTo("Учетная запись не найдена"));
     }
 }

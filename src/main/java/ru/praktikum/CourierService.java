@@ -17,10 +17,10 @@ public class CourierService {
     }
 
     @Step("Логин курьера")
-    public Response loginCourier(Courier courier) {
+    public Response loginCourier(CourierModel model) {
         return given()
                 .header("Content-type", "application/json")
-                .body(courier)
+                .body(model)
                 .when()
                 .post(Endpoints.COURIER_LOGIN);
     }
