@@ -1,14 +1,20 @@
 package ru.praktikum;
 
+import java.time.LocalDate;
+import com.github.javafaker.Faker;
 import io.restassured.RestAssured;
 import org.junit.After;
 import org.junit.Before;
 
 import java.util.List;
+import java.util.Locale;
 
 public class BaseTest {
+    protected CourierService courierService = new CourierService();
+    protected OrderService orderService = new OrderService();
 
-    protected Integer courierId = null;
+    protected Faker faker = new Faker(new Locale("ru"));
+    protected Integer courierId;
 
     @Before
     public void setUp() {
@@ -16,32 +22,33 @@ public class BaseTest {
     }
 
     @After
-    public void cleanup() {
-        if (courierId != null && courierId > 0) {
-            Courier.delete(courierId);
+    public void tearDown() {
+        if (courierId != null) {
+            courierService.deleteCourier(courierId);
         }
     }
 
-    protected Courier createCourierWithUniqueLogin(String password, String firstName) {
-        String uniqueLogin = "login_" + System.currentTimeMillis();
-        Courier courier = new Courier(uniqueLogin, password, firstName);
-
-        courier.create()
-                .then()
-                .statusCode(201);
-
-        courierId = Courier.login(uniqueLogin, password)
-                .then()
-                .extract()
-                .path("id");
-        return courier;
+    protected Courier generateRandomCourier() {
+        return new Courier(
+                faker.name().username(),
+                faker.internet().password(),
+                faker.name().firstName()
+        );
     }
 
-    protected Order createOrder(List<String> color) {
+    protected Order generateRandomOrder(List<String> colors) {
+        String tomorrowDate = LocalDate.now().plusDays(1).toString();
+
         return new Order(
-                "Test", "User", "Test Street, 1",
-                4, "+79990000000", 5,
-                "2025-05-15", "Test comment", color
+                faker.name().firstName(),
+                faker.name().lastName(),
+                faker.address().fullAddress(),
+                faker.number().numberBetween(1, 10),
+                faker.phoneNumber().phoneNumber(),
+                faker.number().numberBetween(1, 10),
+                tomorrowDate,
+                faker.lorem().sentence(),
+                colors
         );
     }
 }
